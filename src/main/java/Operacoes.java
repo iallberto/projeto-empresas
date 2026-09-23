@@ -16,12 +16,19 @@ import java.util.stream.Collectors;
 /**
  * Classe Operacoes
  *
- * Diferente da antiga "Principal", esta classe é INSTANCIÁVEL: guarda a
- * lista de funcionários como estado interno (atributo) e expõe um método
- * público para cada item do enunciado (3.1 a 3.12). Assim, quem for usar
- * a classe (ex.: a Main) instancia um objeto e chama os métodos na ordem
- * e combinação que quiser, sem precisar ficar passando a lista de
- * funcionários como parâmetro toda hora.
+ * Guarda a lista de funcionários como estado interno (atributo) — cada
+ * instância representa uma empresa isolada.
+ *
+ * Repare na divisão dos métodos em dois grupos:
+ *   - "obter*"    -> calculam e RETORNAM um valor, sem imprimir nada.
+ *   - "imprimir*" -> chamam o "obter*" correspondente e só cuidam de exibir.
+ *
+ * Essa separação existe por causa dos TESTES UNITÁRIOS: um método que só
+ * imprime no console é difícil de testar (o teste teria que capturar a
+ * saída padrão do programa). Um método que RETORNA um valor é trivial de
+ * testar: você chama o método e compara o retorno com o valor esperado.
+ * Isolar "calcular" de "exibir" é uma prática chamada Separation of
+ * Concerns, e é o que torna a classe testável.
  */
 public class Operacoes {
 
@@ -34,7 +41,6 @@ public class Operacoes {
         FORMATO_NUMERO.setMaximumFractionDigits(2);
     }
 
-    // Estado interno do objeto: cada instância de Operacoes tem sua própria lista.
     private final List<Funcionario> funcionarios;
     private final String nomeEmpresa;
 
@@ -47,71 +53,67 @@ public class Operacoes {
         return nomeEmpresa;
     }
 
-    /**
-     * 3.1 - Inserir todos os funcionários, lendo-os de um arquivo .xlsx.
-     *
-     * O método não sabe nada sobre "Excel" ou "POI" — isso é delegado à
-     * classe LeitorFuncionarios. Aqui a gente só recebe a lista já pronta
-     * e adiciona ao estado interno. Por receber o caminho como parâmetro,
-     * o mesmo objeto Operacoes pode carregar QUALQUER arquivo que siga o
-     * formato esperado — outra empresa, outro arquivo, mesmo código.
-     */
+    // ============================================================
+    // 3.1 - Inserção
+    // ============================================================
+
     public void inserirFuncionarios(String caminhoArquivo) {
         funcionarios.addAll(LeitorFuncionarios.carregar(caminhoArquivo));
     }
 
     /**
-     * 3.2 - Remover um funcionário da lista pelo nome.
+     * Sobrecarga usada pelos testes: insere uma lista já pronta, sem
+     * precisar de um arquivo .xlsx real em disco.
      */
+    public void inserirFuncionarios(List<Funcionario> listaPronta) {
+        funcionarios.addAll(listaPronta);
+    }
+
+    // ============================================================
+    // 3.2 - Remoção
+    // ============================================================
+
     public void removerFuncionario(String nome) {
         funcionarios.removeIf(f -> f.getNome().equals(nome));
     }
 
-    /**
-     * 3.3 - Imprimir todos os funcionários com todas as informações,
-     * data em dd/mm/aaaa e valores com separador de milhar/decimal em pt-BR.
-     */
+    // ============================================================
+    // 3.3 - Listagem completa
+    // ============================================================
+
+    public List<Funcionario> obterFuncionarios() {
+        return Collections.unmodifiableList(funcionarios);
+    }
+
     public void imprimirFuncionarios() {
-        for (Funcionario f : funcionarios) {
+        for (Funcionario f : obterFuncionarios()) {
             System.out.println(formatarFuncionario(f));
         }
     }
 
-    /**
-     * 3.4 - Aplicar um percentual de aumento sobre o salário de todos os
-     * funcionários, atualizando a lista. Recebe o percentual como parâmetro
-     * (ex.: new BigDecimal("0.10") para 10%) em vez de fixo no código,
-     * assim o método fica reutilizável para qualquer percentual.
-     */
+    // ============================================================
+    // 3.4 - Aumento de salário
+    // ============================================================
+
     public void aplicarAumento(BigDecimal percentual) {
         BigDecimal fator = BigDecimal.ONE.add(percentual);
         for (Funcionario f : funcionarios) {
-            BigDecimal novoSalario = f.getSalario()
-                    .multiply(fator)
-                    .setScale(2, RoundingMode.HALF_UP);
+            BigDecimal novoSalario = f.getSalario().multiply(fator).setScale(2, RoundingMode.HALF_UP);
             f.setSalario(novoSalario);
         }
     }
 
-    /**
-     * 3.5 - Agrupar os funcionários por função em um Map (chave = função,
-     * valor = lista de funcionários). Devolve o Map para quem quiser usar
-     * os dados sem necessariamente imprimir (ex.: 3.6 usa este método).
-     */
+    // ============================================================
+    // 3.5 / 3.6 - Agrupamento por função
+    // ============================================================
+
     public Map<String, List<Funcionario>> agruparPorFuncao() {
         return funcionarios.stream()
-                .collect(Collectors.groupingBy(
-                        Funcionario::getFuncao,
-                        LinkedHashMap::new,
-                        Collectors.toList()));
+                .collect(Collectors.groupingBy(Funcionario::getFuncao, LinkedHashMap::new, Collectors.toList()));
     }
 
-    /**
-     * 3.6 - Imprimir os funcionários agrupados por função.
-     */
     public void imprimirAgrupadosPorFuncao() {
-        Map<String, List<Funcionario>> agrupado = agruparPorFuncao();
-        for (Map.Entry<String, List<Funcionario>> entrada : agrupado.entrySet()) {
+        for (Map.Entry<String, List<Funcionario>> entrada : agruparPorFuncao().entrySet()) {
             System.out.println(entrada.getKey() + ":");
             for (Funcionario f : entrada.getValue()) {
                 System.out.println(formatarFuncionario(f));
@@ -119,68 +121,85 @@ public class Operacoes {
         }
     }
 
-    /**
-     * 3.8 - Imprimir os funcionários que fazem aniversário nos meses informados.
-     * Recebe os meses como parâmetro em vez de fixar 10 e 12 no código.
-     */
-    public void imprimirAniversariantes(int mes1, int mes2) {
-        funcionarios.stream()
+    // ============================================================
+    // 3.8 - Aniversariantes
+    // ============================================================
+
+    public List<Funcionario> obterAniversariantes(int mes1, int mes2) {
+        return funcionarios.stream()
                 .filter(f -> f.getDataNascimento().getMonthValue() == mes1
                         || f.getDataNascimento().getMonthValue() == mes2)
-                .forEach(f -> System.out.println(formatarFuncionario(f)));
+                .collect(Collectors.toList());
     }
 
-    /**
-     * 3.9 - Imprimir o funcionário com a maior idade (nome e idade).
-     * Maior idade = data de nascimento mais ANTIGA.
-     */
-    public void imprimirFuncionarioMaisVelho() {
-        Funcionario maisVelho = funcionarios.stream()
+    public void imprimirAniversariantes(int mes1, int mes2) {
+        obterAniversariantes(mes1, mes2).forEach(f -> System.out.println(formatarFuncionario(f)));
+    }
+
+    // ============================================================
+    // 3.9 - Funcionário mais velho
+    // ============================================================
+
+    public Funcionario obterFuncionarioMaisVelho() {
+        return funcionarios.stream()
                 .min(Comparator.comparing(Funcionario::getDataNascimento))
-                .orElseThrow();
-        int idade = calcularIdade(maisVelho.getDataNascimento());
+                .orElseThrow(() -> new IllegalStateException("Não há funcionários cadastrados."));
+    }
+
+    public void imprimirFuncionarioMaisVelho() {
+        Funcionario maisVelho = obterFuncionarioMaisVelho();
+        int idade = calcularIdade(maisVelho.getDataNascimento(), LocalDate.now());
         System.out.println("Nome: " + maisVelho.getNome() + " | Idade: " + idade);
     }
 
-    /**
-     * 3.10 - Imprimir a lista de funcionários em ordem alfabética (por nome).
-     */
-    public void imprimirOrdemAlfabetica() {
-        funcionarios.stream()
+    // ============================================================
+    // 3.10 - Ordem alfabética
+    // ============================================================
+
+    public List<Funcionario> obterOrdemAlfabetica() {
+        return funcionarios.stream()
                 .sorted(Comparator.comparing(Funcionario::getNome))
-                .forEach(f -> System.out.println(formatarFuncionario(f)));
+                .collect(Collectors.toList());
     }
 
-    /**
-     * 3.11 - Imprimir o total dos salários dos funcionários.
-     */
-    public void imprimirTotalSalarios() {
-        BigDecimal total = funcionarios.stream()
+    public void imprimirOrdemAlfabetica() {
+        obterOrdemAlfabetica().forEach(f -> System.out.println(formatarFuncionario(f)));
+    }
+
+    // ============================================================
+    // 3.11 - Total dos salários
+    // ============================================================
+
+    public BigDecimal obterTotalSalarios() {
+        return funcionarios.stream()
                 .map(Funcionario::getSalario)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        System.out.println("R$ " + FORMATO_NUMERO.format(total));
     }
 
-    /**
-     * 3.12 - Imprimir quantos salários mínimos ganha cada funcionário.
-     */
-    public void imprimirSalariosMinimos() {
+    public void imprimirTotalSalarios() {
+        System.out.println("R$ " + FORMATO_NUMERO.format(obterTotalSalarios()));
+    }
+
+    // ============================================================
+    // 3.12 - Salários mínimos por funcionário
+    // ============================================================
+
+    public Map<String, BigDecimal> obterSalariosMinimosPorFuncionario() {
+        Map<String, BigDecimal> resultado = new LinkedHashMap<>();
         for (Funcionario f : funcionarios) {
-            BigDecimal quantidade = f.getSalario().divide(SALARIO_MINIMO, 2, RoundingMode.HALF_UP);
-            System.out.println(f.getNome() + ": " + FORMATO_NUMERO.format(quantidade));
+            resultado.put(f.getNome(), f.getSalario().divide(SALARIO_MINIMO, 2, RoundingMode.HALF_UP));
         }
+        return resultado;
     }
 
-    /**
-     * Getter de leitura: devolve uma view não-modificável da lista interna.
-     * Assim quem usa o objeto pode CONSULTAR os funcionários sem conseguir
-     * alterar a lista por fora (isso quebraria o encapsulamento).
-     */
-    public List<Funcionario> getFuncionarios() {
-        return Collections.unmodifiableList(funcionarios);
+    public void imprimirSalariosMinimos() {
+        obterSalariosMinimosPorFuncionario()
+                .forEach((nome, quantidade) -> System.out.println(nome + ": " + FORMATO_NUMERO.format(quantidade)));
     }
 
-    // ----- métodos privados de apoio (detalhe de implementação, não fazem parte do "contrato" da classe) -----
+    // ============================================================
+    // Apoio
+    // ============================================================
 
     private String formatarFuncionario(Funcionario f) {
         return "Nome: " + f.getNome() +
@@ -189,7 +208,13 @@ public class Operacoes {
                 " | Função: " + f.getFuncao();
     }
 
-    private int calcularIdade(LocalDate dataNascimento) {
-        return Period.between(dataNascimento, LocalDate.now()).getYears();
+    /**
+     * Recebe a "data de referência" como parâmetro (em vez de usar
+     * LocalDate.now() internamente) exatamente para ficar testável:
+     * um teste pode passar uma data fixa e sempre obter o mesmo resultado,
+     * independente do dia em que os testes rodarem.
+     */
+    public static int calcularIdade(LocalDate dataNascimento, LocalDate dataReferencia) {
+        return Period.between(dataNascimento, dataReferencia).getYears();
     }
 }
