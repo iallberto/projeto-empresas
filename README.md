@@ -1,9 +1,13 @@
 # Sistema de Gestão de Funcionários
 
-Projeto desenvolvido em Java puro (JDK 21, sem dependências externas) a partir de um
-teste prático de processo seletivo, evoluído além do escopo original para demonstrar
-conceitos de Programação Orientada a Objetos, separação de responsabilidades e boas
-práticas de design de software.
+Projeto desenvolvido em Java (JDK 21) a partir de um teste prático de processo
+seletivo, evoluído além do escopo original para demonstrar conceitos de
+Programação Orientada a Objetos, separação de responsabilidades, leitura de
+arquivos e testes automatizados.
+
+O código de produção **não usa nenhuma biblioteca externa** — inclusive a
+leitura de `.xlsx` é feita "na mão" (um `.xlsx` é um ZIP com XMLs dentro),
+usando só classes do próprio JDK.
 
 ## Enunciado original
 
@@ -17,21 +21,24 @@ Dada uma lista de funcionários de uma indústria, o sistema deveria:
 
 ## Evolução do projeto
 
-O histórico de commits deste repositório foi mantido propositalmente para mostrar a
-evolução do raciocínio, do exercício básico até um mini-sistema:
+O histórico de commits foi mantido propositalmente para mostrar a evolução do
+raciocínio, do exercício básico até um mini-sistema:
 
 1. **Versão 1** — solução direta do enunciado: três classes (`Pessoa`, `Funcionario`,
    `Principal`), tudo estático, dados fixos no código.
 2. **Versão 2** — refatoração para POO de verdade: `Principal` vira `Operacoes`,
-   uma classe **instanciável** que guarda o estado (lista de funcionários) por objeto,
-   com um método público por item do enunciado. `Main` passa a ser só o orquestrador.
-3. **Versão 3** — os dados deixam de ser fixos no código e passam a vir de um arquivo
-   `.xlsx` de entrada, lido pela classe `LeitorFuncionarios` (sem depender de
-   bibliotecas externas — um `.xlsx` é lido diretamente como o ZIP/XML que ele é,
-   usando apenas `java.util.zip` e `javax.xml.parsers` do próprio JDK).
-4. **Versão 4 (atual)** — o sistema passa a suportar **múltiplas empresas**
-   simultaneamente (cada `Operacoes` é isolada, com seu próprio nome e lista) e ganha
-   um **menu interativo** via console, com confirmação nas operações que alteram dados.
+   uma classe **instanciável** que guarda o estado (lista de funcionários) por objeto.
+   `Main` passa a ser só o orquestrador.
+3. **Versão 3** — os dados deixam de ser fixos e passam a vir de um arquivo `.xlsx`
+   de entrada, lido pela classe `LeitorFuncionarios`.
+4. **Versão 4** — suporte a **múltiplas empresas** simultâneas (cada `Operacoes` é
+   isolada) e um **menu interativo** via console, com confirmação nas operações
+   que alteram dados.
+5. **Versão 5 (atual)** — projeto reorganizado no formato Maven padrão
+   (`src/main/java`, `src/test/java`) e cobertura de **testes unitários com JUnit 5**.
+   Isso exigiu separar, dentro de `Operacoes`, os métodos que **calculam** (retornam
+   valor, testáveis) dos que **imprimem** (chamam o cálculo e exibem no console) —
+   um método que só imprime é difícil de testar de forma automática.
 
 ## Arquitetura
 
@@ -45,7 +52,16 @@ evolução do raciocínio, do exercício básico até um mini-sistema:
 
 ## Como executar
 
+Com Maven instalado:
+
 ```bash
+mvn compile exec:java -Dexec.mainClass=Main
+```
+
+Ou sem Maven, compilando manualmente:
+
+```bash
+cd src/main/java
 javac *.java
 java Main
 ```
@@ -53,12 +69,24 @@ java Main
 O programa vai pedir o nome do arquivo da empresa (ex.: `EmpresaA`, sem a extensão —
 ele procura `EmpresaA.xlsx` na mesma pasta), perguntar se há uma segunda empresa, e em
 seguida exibir um menu com as operações 2 a 12 do enunciado (o item 1 corresponde à
-carga dos dados, já feita nessa etapa inicial).
+carga dos dados, já feita na etapa inicial).
 
 A planilha de entrada deve seguir o formato: coluna A = Nome, B = Data de Nascimento,
 C = Salário, D = Função, com cabeçalho na primeira linha.
 
+## Testes automatizados
+
+```bash
+mvn test
+```
+
+Cobertura atual: 17 testes (JUnit 5) sobre `Funcionario`, `Operacoes` e
+`LeitorFuncionarios` — incluindo remoção, aumento de salário, agrupamento por
+função, aniversariantes, funcionário mais velho, ordenação, soma de salários,
+cálculo de salários mínimos e leitura de um arquivo `.xlsx` de teste
+(`src/test/resources/EmpresaTeste.xlsx`).
+
 ## Arquivos de exemplo
 
-`EmpresaA.xlsx` e `EmpresaB.xlsx` são cópias da mesma base de dados de exemplo,
-incluídas apenas para demonstrar o suporte a múltiplas empresas.
+`EmpresaA.xlsx` e `EmpresaB.xlsx` (na raiz do projeto) são cópias da mesma base de
+dados de exemplo, incluídas para demonstrar o suporte a múltiplas empresas.

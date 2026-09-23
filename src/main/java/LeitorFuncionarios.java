@@ -108,8 +108,15 @@ public class LeitorFuncionarios {
     }
 
     /**
-     * Lê as células <c> de uma <row> e devolve um mapa "letra da coluna" -> "valor já resolvido"
-     * (já traduzindo string compartilhada para o texto real, quando for o caso).
+     * Lê as células <c> de uma <row> e devolve um mapa "letra da coluna" -> "valor já resolvido".
+     *
+     * O formato .xlsx permite representar texto de duas formas diferentes:
+     *   - t="s"         -> a célula guarda um ÍNDICE para xl/sharedStrings.xml (mais comum;
+     *                      é como o Microsoft Excel salva por padrão)
+     *   - t="inlineStr" -> a célula já traz o texto embutido nela mesma, em <is><t>...</t></is>
+     *                      (usada por algumas bibliotecas, como o openpyxl do Python)
+     * Por isso tratamos os dois casos — um leitor de arquivo real precisa ser tolerante ao
+     * formato exato que cada ferramenta gera, não só ao que uma ferramenta específica produz.
      */
     private static Map<String, String> lerCelulasDaLinha(Element linha, List<String> stringsCompartilhadas) {
         Map<String, String> valores = new LinkedHashMap<>();
@@ -119,17 +126,25 @@ public class LeitorFuncionarios {
             Element celula = (Element) celulas.item(i);
             String referencia = celula.getAttribute("r");       // ex.: "A2", "B2"...
             String coluna = referencia.replaceAll("[0-9]", "");  // "A2" -> "A"
-            String tipo = celula.getAttribute("t");              // "s" = string compartilhada
+            String tipo = celula.getAttribute("t");              // "s" = string compartilhada, "inlineStr" = texto embutido
 
-            NodeList nosValor = celula.getElementsByTagName("v");
-            if (nosValor.getLength() == 0) {
-                continue; // célula vazia
+            String valorFinal;
+            if ("inlineStr".equals(tipo)) {
+                NodeList textos = celula.getElementsByTagName("t");
+                if (textos.getLength() == 0) {
+                    continue; // célula vazia
+                }
+                valorFinal = textos.item(0).getTextContent();
+            } else {
+                NodeList nosValor = celula.getElementsByTagName("v");
+                if (nosValor.getLength() == 0) {
+                    continue; // célula vazia
+                }
+                String valorBruto = nosValor.item(0).getTextContent();
+                valorFinal = "s".equals(tipo)
+                        ? stringsCompartilhadas.get(Integer.parseInt(valorBruto))
+                        : valorBruto;
             }
-            String valorBruto = nosValor.item(0).getTextContent();
-
-            String valorFinal = "s".equals(tipo)
-                    ? stringsCompartilhadas.get(Integer.parseInt(valorBruto))
-                    : valorBruto;
 
             valores.put(coluna, valorFinal);
         }
