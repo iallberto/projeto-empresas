@@ -9,9 +9,11 @@ public class Main {
 
     public static void main(String[] args) {
 
+        String caminhoArquivo = args.length > 0 ? args[0] : "Base_de_dados.xlsx";
+
         Operacoes operacoes = new Operacoes();
 
-        operacoes.inserirFuncionarios();
+        operacoes.inserirFuncionarios(caminhoArquivo);
         operacoes.removerFuncionario("João");
 
         System.out.println("===== 3.3 - Lista de funcionários =====");
