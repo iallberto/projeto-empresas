@@ -5,7 +5,7 @@ seletivo, evoluído além do escopo original para demonstrar conceitos de
 Programação Orientada a Objetos, separação de responsabilidades, leitura de
 arquivos e testes automatizados.
 
-O código de produção **não usa nenhuma biblioteca externa** — inclusive a
+O código de produção **não usa nenhuma biblioteca externa** - inclusive a
 leitura de `.xlsx` é feita "na mão" (um `.xlsx` é um ZIP com XMLs dentro),
 usando só classes do próprio JDK.
 
@@ -24,20 +24,20 @@ Dada uma lista de funcionários de uma indústria, o sistema deveria:
 O histórico de commits foi mantido propositalmente para mostrar a evolução do
 raciocínio, do exercício básico até um mini-sistema:
 
-1. **Versão 1** — solução direta do enunciado: três classes (`Pessoa`, `Funcionario`,
+1. **Versão 1** - solução direta do enunciado: três classes (`Pessoa`, `Funcionario`,
    `Principal`), tudo estático, dados fixos no código.
-2. **Versão 2** — refatoração para POO de verdade: `Principal` vira `Operacoes`,
+2. **Versão 2** - refatoração para POO de verdade: `Principal` vira `Operacoes`,
    uma classe **instanciável** que guarda o estado (lista de funcionários) por objeto.
    `Main` passa a ser só o orquestrador.
-3. **Versão 3** — os dados deixam de ser fixos e passam a vir de um arquivo `.xlsx`
+3. **Versão 3** - os dados deixam de ser fixos e passam a vir de um arquivo `.xlsx`
    de entrada, lido pela classe `LeitorFuncionarios`.
-4. **Versão 4** — suporte a **múltiplas empresas** simultâneas (cada `Operacoes` é
+4. **Versão 4** - suporte a **múltiplas empresas** simultâneas (cada `Operacoes` é
    isolada) e um **menu interativo** via console, com confirmação nas operações
    que alteram dados.
-5. **Versão 5 (atual)** — projeto reorganizado no formato Maven padrão
+5. **Versão 5 (atual)** - projeto reorganizado no formato Maven padrão
    (`src/main/java`, `src/test/java`) e cobertura de **testes unitários com JUnit 5**.
    Isso exigiu separar, dentro de `Operacoes`, os métodos que **calculam** (retornam
-   valor, testáveis) dos que **imprimem** (chamam o cálculo e exibem no console) —
+   valor, testáveis) dos que **imprimem** (chamam o cálculo e exibem no console) -
    um método que só imprime é difícil de testar de forma automática.
 
 ## Arquitetura
@@ -66,7 +66,7 @@ javac *.java
 java Main
 ```
 
-O programa vai pedir o nome do arquivo da empresa (ex.: `EmpresaA`, sem a extensão —
+O programa vai pedir o nome do arquivo da empresa (ex.: `EmpresaA`, sem a extensão -
 ele procura `EmpresaA.xlsx` na mesma pasta), perguntar se há uma segunda empresa, e em
 seguida exibir um menu com as operações 2 a 12 do enunciado (o item 1 corresponde à
 carga dos dados, já feita na etapa inicial).
@@ -81,7 +81,7 @@ mvn test
 ```
 
 Cobertura atual: 17 testes (JUnit 5) sobre `Funcionario`, `Operacoes` e
-`LeitorFuncionarios` — incluindo remoção, aumento de salário, agrupamento por
+`LeitorFuncionarios` - incluindo remoção, aumento de salário, agrupamento por
 função, aniversariantes, funcionário mais velho, ordenação, soma de salários,
 cálculo de salários mínimos e leitura de um arquivo `.xlsx` de teste
 (`src/test/resources/EmpresaTeste.xlsx`).
