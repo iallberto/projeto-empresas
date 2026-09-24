@@ -24,6 +24,10 @@ public class Main {
 
     private static final Scanner ENTRADA = new Scanner(System.in);
 
+    // Pasta onde ficam as planilhas de cada empresa, para não misturar
+    // dados com código-fonte na raiz do projeto.
+    private static final String PASTA_DADOS = "dados/";
+
     public static void main(String[] args) {
 
         List<Operacoes> empresas = configurarEmpresas();
@@ -55,7 +59,7 @@ public class Main {
     }
 
     private static Operacoes carregarEmpresa(String nomeEmpresa) {
-        String caminhoArquivo = nomeEmpresa + ".xlsx";
+        String caminhoArquivo = PASTA_DADOS + nomeEmpresa + ".xlsx";
         Operacoes operacoes = new Operacoes(nomeEmpresa);
         operacoes.inserirFuncionarios(caminhoArquivo);
         System.out.println("-> " + nomeEmpresa + " carregada com sucesso a partir de \"" + caminhoArquivo + "\".");
